@@ -2,7 +2,7 @@
   <div class="max-w-4xl mx-auto p-6">
     <h1 class="text-2xl font-bold mb-4">📓 My Essays</h1>
 
-    <div v-if="essays.length === 0" class="text-gray-500">
+    <div class="text-gray-500">
       <button @click="insertEssay">Create new Essay</button>
     </div>
 
@@ -40,7 +40,6 @@ const title = ref("");
 const content = ref("");
 
 const fetchessays = async () => {
-  console.log(user.value);
   if (!user.value) return;
 
   const { data, error } = await client
@@ -50,8 +49,6 @@ const fetchessays = async () => {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-
-  console.log(data);
 
   if (data) essays.value = data;
 };
@@ -77,9 +74,7 @@ const insertEssay = async () => {
     return;
   }
 
-  console.log("✅ Essay inserted:", data);
-
-  router.push(`/essays/${data.id}`);
+  navigateTo(`/essays/${data.id}`);
 };
 
 const formatDate = (str: string) => {

@@ -26,3 +26,9 @@ export interface Database {
     Enums: {};
   };
 }
+
+export type folderts = {
+  id?: string;
+  user_id: string;
+  title: string;
+}

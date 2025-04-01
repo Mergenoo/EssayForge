@@ -20,7 +20,7 @@ const userProfile = ref<UserProfile | null>(null);
 const client = useSupabaseClient();
 const user = useSupabaseUser();
 
-// ✅ Fetch user profile from your `users` table
+
 const fetchUser = async () => {
   if (!user.value) return;
 
@@ -41,10 +41,8 @@ const fetchUser = async () => {
   }
 
   userProfile.value = data;
-  console.log("✅ Profile loaded:", data);
 };
 
-// ✅ Call Edge Function to delete from auth.users
 const deleteAuthUser = async () => {
   const id = user.value?.id;
 
@@ -63,31 +61,31 @@ const deleteAuthUser = async () => {
     return;
   }
 
-  console.log("✅ User deleted from auth");
-
   navigateTo("/");
 };
 
-// ✅ Delete from custom users table, then call auth delete
 const deleteUser = async () => {
   if (!user.value) return;
 
   const { error } = await client.from("users").delete().eq("id", user.value.id);
+  const { error: essayerror } = await client
+    .from("essays")
+    .delete()
+    .eq("user_id", user.value.id);
 
+  if (essayerror) {
+    console.error("failed to delete essays", essayerror.message);
+    return;
+  }
   if (error) {
     console.error("❌ Error deleting from users table:", error.message);
     return;
   }
 
-  console.log("✅ User deleted from users table");
-
   await deleteAuthUser();
 };
 
 onMounted(() => {
-  if (!user.value) {
-    console.log("👀 Waiting for user session...");
-  }
   fetchUser();
 });
 

@@ -36,8 +36,6 @@
         Log In
       </button>
 
-      <button @onclick="testbutton">test button</button>
-
       <p class="text-sm text-center mt-3">
         Don't have an account?
         <NuxtLink to="/signup" class="text-blue-600 hover:underline"
@@ -64,10 +62,6 @@ const email = ref("");
 const password = ref("");
 const errorMessage = ref("");
 
-const testbutton = async () => {
-  console.log("hello");
-};
-
 const handleSignIn = async () => {
   if (!email.value || !password.value) {
     errorMessage.value = "All fields are required!";
@@ -84,7 +78,6 @@ const handleSignIn = async () => {
     return;
   }
 
-  // Login successful, redirect
   router.push("/home");
 };
 </script>

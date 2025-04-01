@@ -3,14 +3,14 @@
     <input
       v-model="title"
       placeholder="Essay Title"
-      class="input mb-4 text-xl font-bold"
+      class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-xl font-bold"
     />
 
     <textarea
       v-model="content"
       placeholder="Edit your essay..."
       rows="12"
-      class="input"
+      class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
 
     <p v-if="saving" class="text-sm mt-2 text-gray-500">Saving...</p>
@@ -34,7 +34,7 @@ const content = ref("");
 const saving = ref(false);
 
 const loadEssay = async () => {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("essays")
     .select("*")
     .eq("id", essayId)
@@ -45,6 +45,10 @@ const loadEssay = async () => {
     title.value = data.title;
     content.value = data.content;
   }
+};
+
+const clearDraft = () => {
+  localStorage.removeItem(`draft-${essayId}`);
 };
 
 const saveEssay = async () => {
@@ -60,21 +64,41 @@ const saveEssay = async () => {
     .eq("id", essayId);
 
   saving.value = false;
+
+  if (!error) {
+    clearDraft();
+  }
 };
+
+const saveDraft = useDebounceFn(() => {
+  const draft = {
+    title: title.value,
+    content: content.value,
+    updated_at: new Date().toISOString(),
+  };
+  localStorage.setItem(`draft-${essayId}`, JSON.stringify(draft));
+}, 500);
 
 const debouncedSave = useDebounceFn(saveEssay, 1500);
 
 watch([title, content], () => {
+  saveDraft();
   debouncedSave();
 });
 
 onMounted(() => {
+  const draftRaw = localStorage.getItem(`draft-${essayId}`);
+  if (draftRaw) {
+    const draft = JSON.parse(draftRaw);
+    if (draft?.content?.length > 0) {
+      content.value = draft.content;
+      title.value = draft.title;
+    }
+  }
+  clearDraft();
   loadEssay();
 });
-</script>
 
-<style scoped>
-.input {
-  @apply w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500;
-}
-</style>
+// @ts-ignore
+definePageMeta({ middleware: "auth" });
+</script>
