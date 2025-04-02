@@ -1,5 +1,5 @@
 <template>
-  <nav class="h-16 bg-[#121212] shadow-md py-3">
+  <nav class="h-16 bg-[#121212] border-b border-white/10 py-3">
     <div
       :class="[
         'flex items-center justify-between',
@@ -146,7 +146,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
+import type { UserProfile } from "~/types/users";
 const client = useSupabaseClient();
+const router = useRouter();
 const route = useRoute();
 const user = useSupabaseUser();
 
@@ -196,6 +198,6 @@ onBeforeUnmount(() => {
 
 const signOut = async () => {
   const { error } = await client.auth.signOut();
-  if (!error) route.push("/");
+  if (!error) router.push("/");
 };
 </script>

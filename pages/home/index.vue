@@ -2,10 +2,6 @@
   <div class="max-w-4xl mx-auto p-6">
     <h1 class="text-2xl font-bold mb-4">📓 My Essays</h1>
 
-    <div class="text-gray-500">
-      <button @click="insertEssay">Create new Essay</button>
-    </div>
-
     <ul>
       <li
         v-for="essay in essays"
@@ -51,30 +47,6 @@ const fetchessays = async () => {
   if (error) throw error;
 
   if (data) essays.value = data;
-};
-
-const insertEssay = async () => {
-  if (!user.value) {
-    console.error("Not logged in");
-    return;
-  }
-
-  const { data, error } = await client
-    .from("essays")
-    .insert({
-      user_id: user.value.id,
-      title: title.value,
-      content: content.value,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("Insert error:", error.message);
-    return;
-  }
-
-  navigateTo(`/essays/${data.id}`);
 };
 
 const formatDate = (str: string) => {

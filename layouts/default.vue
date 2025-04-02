@@ -5,12 +5,12 @@
       <Navbar />
     </div>
 
-    <div class="flex flex-1 pt-16 pb-16 overflow-hidden">
+    <div class="flex flex-1 pt-16 overflow-hidden">
       <div v-if="isHomeRoute" class="w-64 verflow-y-auto h-full">
-        <Navbar />
+        <Sidebar />
       </div>
 
-      <main class="flex-1 overflow-y-auto p-4 h-full">
+      <main class="flex-1 overflow-y-auto h-full">
         <slot />
       </main>
     </div>
