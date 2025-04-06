@@ -24,16 +24,14 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from "vue-router";
 import type { Database } from "~/types/supabase";
-const router = useRouter();
+
 
 const client = useSupabaseClient<Database>();
 const user = useSupabaseUser();
 
 const essays = ref<any[]>([]);
-const title = ref("");
-const content = ref("");
+
 
 const fetchessays = async () => {
   if (!user.value) return;

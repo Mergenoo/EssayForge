@@ -7,7 +7,7 @@
       'text-gray-300 hover:bg-[#1a1a1a] hover:text-white': !isActive,
     }"
   >
-    <component :is="`i-${icon}`" class="w-4 h-4" />
+    <component :is="`i-${ icon}`" class="w-4 h-4" />
     <span>{{ label }}</span>
   </NuxtLink>
 </template>

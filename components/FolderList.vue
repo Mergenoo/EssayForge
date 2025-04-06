@@ -7,34 +7,75 @@
           :key="folder.id"
           class="text-white font-sans flex flex-col"
         >
-          <!-- Folder Header -->
           <div
-            class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-[#2a2a2a] transition rounded"
+            class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-[#2a2a2a] transition"
             @click="toggle(folder.id)"
           >
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2" @click.stop>
               <i-lucide-folder class="w-4 h-4" />
-              <span>{{ folder.title || "Untitled" }}</span>
+
+              <input
+                v-if="renamingFolderId === folder.id"
+                v-model="renameTitle"
+                class="bg-transparent border border-white/20 px-2 text-sm text-white focus:outline-none"
+                @keyup.enter="confirmRename"
+                @blur="cancelRename"
+                autofocus
+              />
+              <span v-else>
+                {{ folder.title || "Untitled" }}
+              </span>
             </div>
 
-            <div class="flex items-center gap-2">
-              <i-lucide-more-horizontal class="w-4 h-4" />
+            <div class="relative" @click.stop>
+              <button @click="toggleMenu(folder.id)">
+                <i-lucide-more-horizontal class="w-4 h-4" />
+              </button>
+
+              <div
+                v-if="openMenuId === folder.id"
+                class="absolute right-0 mt-2 w-32 bg-[#2a2a2a] rounded shadow-md z-50"
+              >
+                <button
+                  class="block w-full text-left text-white px-4 py-2 hover:bg-gray-600"
+                  @click="startRename(folder)"
+                >
+                  Rename
+                </button>
+                <button
+                  class="block w-full text-left text-red-400 px-4 py-2 hover:bg-gray-600"
+                  @click="deleteFolder(folder.id)"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
 
           <div
             v-if="openFolderId === folder.id"
-            class="bg-[#1d1d1d] px-6 py-3 rounded-b-md"
+            class="bg-[#1d1d1d] hover:bg-[#2a2a2a] cursor-pointer"
           >
-            <ul class="flex flex-col gap-1">
+            <ul
+              v-if="folderEssays[folder.id] && folderEssays[folder.id].length"
+              class="flex flex-col gap-1"
+            >
               <li
-                v-for="essay in getEssaysForFolder(folder.id)"
+                v-for="essay in folderEssays[folder.id]"
                 :key="essay.id"
-                class="text-sm text-white hover:bg-[#2a2a2a] px-3 py-1 rounded cursor-pointer"
+                class="text-nm text-white"
               >
-                {{ essay.title || "Untitled Essay" }}
+                <NuxtLink
+                  :to="`/essays/${essay.id}`"
+                  class="block w-full px-6 py-3 text-nm text-white hover:bg-[#2a2a2a]"
+                >
+                  {{ essay.title || "Untitled Essay" }}
+                </NuxtLink>
               </li>
             </ul>
+            <p v-else class="text-nm px-6 py-3 text-gray-500 italic">
+              No essays found.
+            </p>
           </div>
         </li>
       </ul>
@@ -49,6 +90,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import type { Database } from "~/types/supabase";
 
 interface Folder {
   id: number | string;
@@ -63,12 +106,14 @@ interface Essay {
   user_id: string;
 }
 
-const client = useSupabaseClient();
+const client = useSupabaseClient<Database>();
 const user = useSupabaseUser();
-
 const folders = ref<Folder[]>([]);
-const essays = ref<Essay[]>([]);
+const folderEssays = ref<Record<string, Essay[]>>({});
 const openFolderId = ref<number | string | null>(null);
+const openMenuId = ref<number | string | null>(null);
+const renamingFolderId = ref<number | string | null>(null);
+const renameTitle = ref("");
 
 const fetchFolder = async () => {
   if (!user.value) return;
@@ -85,11 +130,13 @@ const fetchFolder = async () => {
   folders.value = data || [];
 };
 
-const fetchEssays = async () => {
+const fetchEssaysForFolder = async (folderId: number | string) => {
   if (!user.value) return;
+
   const { data, error } = await client
     .from("essays")
     .select("*")
+    .eq("folder_id", folderId)
     .eq("user_id", user.value.id);
 
   if (error) {
@@ -97,21 +144,64 @@ const fetchEssays = async () => {
     return;
   }
 
-  console.log("essaysasdasda", data);
-
-  essays.value = data || [];
+  folderEssays.value[folderId] = data || [];
 };
 
-const getEssaysForFolder = (folderId: number | string): Essay[] => {
-  return essays.value.filter((essay) => essay.folder_id === folderId);
-};
-
-const toggle = (folderId: number | string) => {
+const toggle = async (folderId: number | string) => {
   openFolderId.value = openFolderId.value === folderId ? null : folderId;
+
+  if (openFolderId.value && !folderEssays.value[folderId]) {
+    await fetchEssaysForFolder(folderId);
+  }
+};
+
+const toggleMenu = (folderId: number | string) => {
+  openMenuId.value = openMenuId.value === folderId ? null : folderId;
+};
+
+const startRename = (folder: Folder) => {
+  renamingFolderId.value = folder.id;
+  renameTitle.value = folder.title;
+  openMenuId.value = null;
+};
+
+const confirmRename = async () => {
+  if (!user.value || !renamingFolderId.value) return;
+
+  const { error } = await client
+    .from("folders")
+    .update({ title: renameTitle.value } as any)
+    .eq("id", renamingFolderId.value);
+
+  if (error) {
+    console.error("Rename error:", error.message);
+    return;
+  }
+
+  await fetchFolder();
+  renamingFolderId.value = null;
+  renameTitle.value = "";
+};
+
+const cancelRename = () => {
+  renamingFolderId.value = null;
+  renameTitle.value = "";
+};
+
+const deleteFolder = async (folderId: number | string) => {
+  if (!user.value) return;
+
+  const { error } = await client.from("folders").delete().eq("id", folderId);
+
+  if (error) {
+    console.error("Delete error:", error.message);
+    return;
+  }
+
+  await fetchFolder();
 };
 
 onMounted(() => {
   fetchFolder();
-  fetchEssays();
 });
 </script>
