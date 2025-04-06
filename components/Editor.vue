@@ -1,52 +1,3 @@
-<script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import { useEditor, EditorContent } from "@tiptap/vue-3";
-import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import {
-  Bold,
-  Italic,
-  Type,
-  List,
-  ListOrdered,
-  Save,
-  Fullscreen,
-} from "lucide-vue-next"; // Icons
-
-const editor = useEditor({
-  extensions: [StarterKit, Underline],
-  content: "<p>Start writing your essay...</p>",
-  autofocus: true,
-});
-
-const isFullscreen = ref(false);
-
-// Toggle Full-Screen Mode
-const toggleFullscreen = () => {
-  isFullscreen.value = !isFullscreen.value;
-  document.body.classList.toggle("fullscreen-mode", isFullscreen.value);
-};
-
-// Save Essay Content
-const saveEssay = () => {
-  localStorage.setItem("essayDraft", editor.value.getHTML());
-  alert("Essay saved!");
-};
-
-// Load Saved Essay
-onMounted(() => {
-  const savedEssay = localStorage.getItem("essayDraft");
-  if (savedEssay) {
-    editor.value.commands.setContent(savedEssay);
-  }
-});
-
-// Destroy editor on unmount
-onBeforeUnmount(() => {
-  editor.value?.destroy();
-});
-</script>
-
 <template>
   <div
     :class="[
@@ -116,3 +67,52 @@ onBeforeUnmount(() => {
     </div>
   </div>
 </template>
+
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from "vue";
+import { useEditor, EditorContent } from "@tiptap/vue-3";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import {
+  Bold,
+  Italic,
+  Type,
+  List,
+  ListOrdered,
+  Save,
+  Fullscreen,
+} from "lucide-vue-next";
+
+const editor = useEditor({
+  extensions: [StarterKit, Underline],
+  content: "<p>Start writing your essay...</p>",
+  autofocus: true,
+});
+
+const isFullscreen = ref(false);
+
+
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value;
+  document.body.classList.toggle("fullscreen-mode", isFullscreen.value);
+};
+
+
+const saveEssay = () => {
+  localStorage.setItem("essayDraft", editor.value.getHTML());
+  alert("Essay saved!");
+};
+
+
+onMounted(() => {
+  const savedEssay = localStorage.getItem("essayDraft");
+  if (savedEssay) {
+    editor.value.commands.setContent(savedEssay);
+  }
+});
+
+
+onBeforeUnmount(() => {
+  editor.value?.destroy();
+});
+</script>

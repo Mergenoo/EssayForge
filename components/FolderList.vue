@@ -73,6 +73,14 @@
                 </NuxtLink>
               </li>
             </ul>
+
+            <!-- Loading & Empty States -->
+            <p
+              v-else-if="!folderEssays[folder.id]"
+              class="text-nm px-6 py-3 text-gray-500 italic"
+            >
+              Loading essays...
+            </p>
             <p v-else class="text-nm px-6 py-3 text-gray-500 italic">
               No essays found.
             </p>
@@ -148,10 +156,11 @@ const fetchEssaysForFolder = async (folderId: number | string) => {
 };
 
 const toggle = async (folderId: number | string) => {
-  openFolderId.value = openFolderId.value === folderId ? null : folderId;
+  const isOpening = openFolderId.value !== folderId;
+  openFolderId.value = isOpening ? folderId : null;
 
-  if (openFolderId.value && !folderEssays.value[folderId]) {
-    await fetchEssaysForFolder(folderId);
+  if (isOpening && !folderEssays.value[folderId]) {
+    fetchEssaysForFolder(folderId); // Don't await, open immediately
   }
 };
 

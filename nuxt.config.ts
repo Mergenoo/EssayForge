@@ -3,7 +3,7 @@ import Components from "unplugin-vue-components/vite";
 import IconsResolver from "unplugin-icons/resolver";
 
 export default defineNuxtConfig({
-  modules: ["@nuxtjs/tailwindcss", "nuxt-tiptap-editor", "@nuxtjs/supabase"],
+  modules: ["@nuxtjs/tailwindcss", "nuxt-tiptap-editor", "@nuxtjs/supabase", "@pinia/nuxt"],
   tailwindcss: {
     exposeConfig: true,
     viewer: true,
