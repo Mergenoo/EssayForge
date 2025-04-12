@@ -38,7 +38,7 @@ export const useEssayStore = defineStore("essay", () => {
       return;
     }
 
-    const { data, error } = await client
+    const { error } = await client
       .from("essays")
       .insert({
         user_id: user.value.id,
@@ -55,6 +55,10 @@ export const useEssayStore = defineStore("essay", () => {
   }
 
   async function deleteEssay(id: string) {
+    if (!user.value) return;
+
+    loading.value = true;
+
     const { error } = await client.from("essays").delete().eq("id", id);
     if (!error) {
       essays.value = essays.value.filter((e) => e.id !== id);

@@ -22,15 +22,14 @@
           >
             <td class="py-3 px-4">
               <NuxtLink
-                :to="`//${essay.id}`"
+                :to="`/essays/${essay.id}`"
                 class="font-medium hover:underline"
               >
                 {{ essay.title || "Untitled Essay" }}
               </NuxtLink>
               <p class="text-gray-400 text-xs mt-1 truncate max-w-md">
-                {{ essay.content || "No content yet." }}
+                {{ previewText(essay.content) || "No content yet." }}
               </p>
-
             </td>
 
             <td class="py-3 px-4">
@@ -61,16 +60,30 @@
 
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { useEssayStore } from "~/src/store/essay"; 
+import { useEssayStore } from "~/src/store/essay";
 
 const essayStore = useEssayStore();
 
-const countWords = (text: string) => {
-  if (!text) return 0;
-  return text.trim().split(/\s+/).length;
+const countWords = (content: any): number => {
+  if (!Array.isArray(content)) return 0;
+  return content
+    .map((block) => block?.data?.text || "")
+    .join(" ")
+    .trim()
+    .split(/\s+/).length;
 };
 
-const formatDate = (str: string) => {
+const previewText = (content: any): string => {
+  if (!Array.isArray(content)) return "";
+  return content
+    .map((block) => block?.data?.text || "")
+    .join(" ")
+    .trim()
+    .slice(0, 150);
+};
+
+const formatDate = (str?: string) => {
+  if (!str) return "N/A";
   return new Date(str).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",

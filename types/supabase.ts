@@ -8,21 +8,40 @@ export interface Database {
           folder_id: string;
           shared_id: string;
           title: string;
-          content: string;
+          content: {
+            id: string;
+            type: "outlineTopic" | "paragraph";
+            data: {
+              text: string;
+            };
+          }[];
           created_at: string;
           updated_at: string;
         };
         Insert: {
           user_id: string;
           title: string;
-          content: string;
+
+          content: {
+            id: string;
+            type: "outlineTopic" | "paragraph";
+            data: {
+              text: string;
+            };
+          }[];
         };
         Update: Partial<{
           title: string;
-          content: string;
+
+          content: {
+            id: string;
+            type: "outlineTopic" | "paragraph";
+            data: {
+              text: string;
+            };
+          }[];
         }>;
       };
-
       folders: {
         Row: {
           id: string;

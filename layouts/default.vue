@@ -15,7 +15,9 @@
       </main>
     </div>
 
-    <Footer />
+    <div v-if="toggle">
+      <Footer />
+    </div>
   </div>
 </template>
 
@@ -25,5 +27,15 @@ import Footer from "~/components/Footer.vue";
 import Sidebar from "~/components/Sidebar.vue";
 
 const route = useRoute();
+const toggle = ref(false);
 const isHomeRoute = computed(() => route.path.startsWith("/home"));
+
+const handleToggle = () => {
+  const essayRoute = route.params.id;
+  if (!essayRoute) toggle.value = !toggle.value;
+};
+
+onMounted(() => {
+  handleToggle();
+});
 </script>

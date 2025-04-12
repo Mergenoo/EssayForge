@@ -73,8 +73,6 @@
                 </NuxtLink>
               </li>
             </ul>
-
-            <!-- Loading & Empty States -->
             <p
               v-else-if="!folderEssays[folder.id]"
               class="text-nm px-6 py-3 text-gray-500 italic"
@@ -98,7 +96,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
 import type { Database } from "~/types/supabase";
 
 interface Folder {
@@ -116,29 +113,34 @@ interface Essay {
 
 const client = useSupabaseClient<Database>();
 const user = useSupabaseUser();
+
 const folders = ref<Folder[]>([]);
 const folderEssays = ref<Record<string, Essay[]>>({});
-const openFolderId = ref<number | string | null>(null);
-const openMenuId = ref<number | string | null>(null);
-const renamingFolderId = ref<number | string | null>(null);
+const openFolderId = ref<string | null>(null);
+const openMenuId = ref<string | null>(null);
+const renamingFolderId = ref<string | null>(null);
 const renameTitle = ref("");
 
-const fetchFolder = async () => {
+const fetchFolders = async () => {
   if (!user.value) return;
+
   const { data, error } = await client
     .from("folders")
     .select("*")
     .eq("user_id", user.value.id);
 
   if (error) {
-    console.error("Fetch error:", error.message);
+    console.error("Folder fetch error:", error.message);
     return;
   }
 
-  folders.value = data || [];
+  folders.value = (data || []).map((f) => ({
+    ...f,
+    id: String(f.id),
+  }));
 };
 
-const fetchEssaysForFolder = async (folderId: number | string) => {
+const fetchEssaysForFolder = async (folderId: string) => {
   if (!user.value) return;
 
   const { data, error } = await client
@@ -152,24 +154,29 @@ const fetchEssaysForFolder = async (folderId: number | string) => {
     return;
   }
 
-  folderEssays.value[folderId] = data || [];
+  folderEssays.value[folderId] = (data || []).map((e) => ({
+    ...e,
+    folder_id: String(e.folder_id),
+  }));
 };
 
 const toggle = async (folderId: number | string) => {
-  const isOpening = openFolderId.value !== folderId;
-  openFolderId.value = isOpening ? folderId : null;
+  const id = String(folderId);
+  const isOpening = openFolderId.value !== id;
+  openFolderId.value = isOpening ? id : null;
 
-  if (isOpening && !folderEssays.value[folderId]) {
-    fetchEssaysForFolder(folderId); // Don't await, open immediately
+  if (isOpening && !folderEssays.value[id]) {
+    await fetchEssaysForFolder(id);
   }
 };
 
 const toggleMenu = (folderId: number | string) => {
-  openMenuId.value = openMenuId.value === folderId ? null : folderId;
+  const id = String(folderId);
+  openMenuId.value = openMenuId.value === id ? null : id;
 };
 
 const startRename = (folder: Folder) => {
-  renamingFolderId.value = folder.id;
+  renamingFolderId.value = String(folder.id);
   renameTitle.value = folder.title;
   openMenuId.value = null;
 };
@@ -179,7 +186,7 @@ const confirmRename = async () => {
 
   const { error } = await client
     .from("folders")
-    .update({ title: renameTitle.value } as any)
+    .update({ title: renameTitle.value })
     .eq("id", renamingFolderId.value);
 
   if (error) {
@@ -187,7 +194,7 @@ const confirmRename = async () => {
     return;
   }
 
-  await fetchFolder();
+  await fetchFolders();
   renamingFolderId.value = null;
   renameTitle.value = "";
 };
@@ -207,10 +214,10 @@ const deleteFolder = async (folderId: number | string) => {
     return;
   }
 
-  await fetchFolder();
+  await fetchFolders();
 };
 
 onMounted(() => {
-  fetchFolder();
+  fetchFolders();
 });
 </script>

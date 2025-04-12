@@ -1,39 +1,35 @@
 <template>
-  <div class="flex pt-2">
-    <sideline />
-    <OutlinePanel v-if="ui.isOutlineOpen" />
-    <!-- // mx-auto, max-w-3xl -->
-    <div class="p-6 bg-gray-700">
+  <div class="max-w-3xl mx-auto p-6">
+    <div
+      v-for="(block, index) in content"
+      :key="block.id"
+      class="group relative flex items-start gap-2 mb-1"
+    >
       <div
-        v-for="(block, index) in content"
-        :key="block.id"
-        class="group relative flex items-start gap-2 mb-1"
+        class="w-6 mt-1 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center text-gray-400"
       >
-        <div
-          class="w-6 mt-1 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center text-gray-400"
-        >
-          <button class="hover:text-gray-600" @click="insertBlockAfter(index)">
-            +
-          </button>
-          <span class="text-sm cursor-move select-none">⋮⋮</span>
-        </div>
-
-        <div
-          contenteditable
-          :data-id="block.id"
-          spellcheck="false"
-          :ref="(el) => setBlockText(el, block.data.text)"
-          :class="[
-            'outline-none w-full p-1 border-l-2',
-            block.type === 'outlineTopic'
-              ? 'font-semibold text-green-400 border-green-500'
-              : 'text-white border-transparent',
-          ]"
-          @input="onBlockInput($event, block.id)"
-          @keydown.enter.prevent="insertBlockAfter(index)"
-          @keydown.tab.prevent="handleTab($event)"
-        ></div>
+        <button class="hover:text-gray-600" @click="insertBlockAfter(index)">
+          +
+        </button>
+        <span class="text-sm cursor-move select-none">⋮⋮</span>
       </div>
+
+
+      <div
+        contenteditable
+        :data-id="block.id"
+        spellcheck="false"
+        :ref="(el) => setBlockText(el, block.data.text)"
+        :class="[
+          'outline-none w-full p-1 border-l-2',
+          block.type === 'outlineTopic'
+            ? 'font-semibold text-green-400 border-green-500'
+            : 'text-white border-transparent',
+        ]"
+        @input="onBlockInput($event, block.id)"
+        @keydown.enter.prevent="insertBlockAfter(index)"
+        @keydown.tab.prevent="handleTab($event)"
+      ></div>
     </div>
   </div>
 </template>
@@ -44,14 +40,10 @@ import { useRoute } from "vue-router";
 import { useDebounceFn } from "@vueuse/core";
 import { v4 as uuidv4 } from "uuid";
 import type { Database } from "~/types/supabase";
-import sideline from "~/components/Sideline.vue";
-import OutlinePanel from "~/components/Outline.vue";
-import { useUIStore } from "~/src/store/ui";
 
 const supabase = useSupabaseClient<Database>();
 const user = useSupabaseUser();
 const route = useRoute();
-const ui = useUIStore();
 
 const essayId = route.params.id as string;
 const title = ref("");
@@ -74,7 +66,7 @@ const loadEssay = async () => {
   const { data } = await supabase
     .from("essays")
     .select("title, content")
-    .eq("id", essayId)
+    .eq("id", "4760f5c5-261b-4b2d-9c69-7e17af5c1b4c")
     .eq("user_id", user.value?.id)
     .single();
 
@@ -146,7 +138,7 @@ const saveEssay = async () => {
       title: title.value,
       content: content.value,
     })
-    .eq("id", essayId);
+    .eq("id", "4760f5c5-261b-4b2d-9c69-7e17af5c1b4c");
 
   saving.value = false;
 
