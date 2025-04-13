@@ -1,9 +1,25 @@
 <template>
-  <div class="flex pt-2">
-    <sideline />
-    <OutlinePanel v-if="ui.isOutlineOpen" />
-    <!-- // mx-auto, max-w-3xl -->
-    <div class="p-6 bg-gray-700">
+  <div class="flex h-screen w-full overflow-hidden">
+    <!-- Sidebar -->
+    <sideline class="w-20" />
+
+    <!-- Outline Panel (slide in/out) -->
+    <div
+      class="transition-all duration-300 ease-in-out bg-secondary overflow-hidden"
+      :class="ui.isOutlineOpen || ui.isRewriteOpen ? 'w-80' : 'w-0'"
+    >
+      <div v-if="ui.isOutlineOpen" class="h-full">
+        <OutlinePanel />
+      </div>
+      <div v-else-if="ui.isRewriteOpen" class="h-full">
+        <Rewrite />
+      </div>
+    </div>
+
+    <!-- Main Editor Area -->
+    <div
+      class="flex-1 transition-all duration-300 ease-in-out px-6 pt-4 overflow-y-auto"
+    >
       <div
         v-for="(block, index) in content"
         :key="block.id"
@@ -30,8 +46,9 @@
               : 'text-white border-transparent',
           ]"
           @input="onBlockInput($event, block.id)"
+          @keydown="handleKeydown($event, index)"
           @keydown.enter.prevent="insertBlockAfter(index)"
-          @keydown.tab.prevent="handleTab($event)"
+          @keydown.tab.prevent="handleTab($event, index)"
         ></div>
       </div>
     </div>
@@ -46,6 +63,7 @@ import { v4 as uuidv4 } from "uuid";
 import type { Database } from "~/types/supabase";
 import sideline from "~/components/Sideline.vue";
 import OutlinePanel from "~/components/Outline.vue";
+import Rewrite from "~/components/Rewrite.vue";
 import { useUIStore } from "~/src/store/ui";
 
 const supabase = useSupabaseClient<Database>();
@@ -115,25 +133,79 @@ const insertBlockAfter = (index: number) => {
   });
 };
 
+const handleKeydown = (event: KeyboardEvent, index: number) => {
+  const target = event.target as HTMLElement;
+
+  // BACKSPACE (or DELETE) deletes block only if empty
+  if (
+    (event.key === "Backspace" || event.key === "Delete") &&
+    target.innerText.trim() === ""
+  ) {
+    event.preventDefault();
+
+    if (content.value.length > 1) {
+      content.value.splice(index, 1);
+
+      nextTick(() => {
+        const focusIndex = index > 0 ? index - 1 : 0;
+        const prevBlock = content.value[focusIndex];
+        const el = document.querySelector(`[data-id='${prevBlock.id}']`);
+        if (el instanceof HTMLElement) {
+          el.focus();
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          const selection = window.getSelection();
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }
+      });
+    }
+  }
+
+  // Move UP
+  if (event.key === "ArrowUp" && index > 0) {
+    event.preventDefault();
+    const prevBlock = content.value[index - 1];
+    const el = document.querySelector(`[data-id='${prevBlock.id}']`);
+    if (el instanceof HTMLElement) {
+      el.focus();
+    }
+  }
+
+  // Move DOWN
+  if (event.key === "ArrowDown" && index < content.value.length - 1) {
+    event.preventDefault();
+    const nextBlock = content.value[index + 1];
+    const el = document.querySelector(`[data-id='${nextBlock.id}']`);
+    if (el instanceof HTMLElement) {
+      el.focus();
+    }
+  }
+};
+
 const clearDraft = () => {
   localStorage.removeItem(`draft-${essayId}`);
 };
 
-const handleTab = (event: KeyboardEvent) => {
+const handleTab = (event: KeyboardEvent, index: number) => {
   event.preventDefault();
 
-  const selection = window.getSelection();
-  if (!selection || !selection.rangeCount) return;
+  const nextBlock = content.value[index + 1];
+  if (!nextBlock) return;
 
-  const range = selection.getRangeAt(0);
-  const tabNode = document.createTextNode("    "); // 4 spaces
-  range.insertNode(tabNode);
+  const el = document.querySelector(`[data-id='${nextBlock.id}']`);
+  if (el instanceof HTMLElement) {
+    el.focus();
 
-  // Move caret after inserted spaces
-  range.setStartAfter(tabNode);
-  range.setEndAfter(tabNode);
-  selection.removeAllRanges();
-  selection.addRange(range);
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(true); // true = beginning of block; false = end
+
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
 };
 
 const saveEssay = async () => {
@@ -195,6 +267,17 @@ onMounted(() => {
       title.value = draft.title;
     }
   }
+
+  // If still empty, insert the first block
+  if (content.value.length === 0) {
+    content.value.push({
+      id: uuidv4(),
+      type: "paragraph",
+      data: { text: "" },
+    });
+  }
+
+  ui.closeOutline();
   clearDraft();
   loadEssay();
 });

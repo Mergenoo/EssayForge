@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-screen w-14 bg-[#0d0d0d] flex flex-col items-center py-4 space-y-4"
+    class="h-screen w-14 bg-secondary flex flex-col items-center py-4 space-y-4 border-r border-white/10 border-opacity-0"
   >
     <button
       @click="
@@ -19,7 +19,11 @@
     </button>
 
     <button
-      @click="setActive('write')"
+      @click="
+        () => {
+          setActive('write');
+        }
+      "
       class="w-10 h-10 flex items-center justify-center rounded-sm border transition"
       :class="[
         activeTab === 'write'
@@ -69,12 +73,19 @@ const setActive = (tab: typeof activeTab.value) => {
   } else {
     ui.closeOutline();
   }
+
+  if (tab === "write") {
+    ui.openRewrite();
+  } else {
+    ui.closeRewrite();
+  }
 };
 
 watch(
   () => route.fullPath,
   () => {
     ui.closeOutline();
+    ui.closeRewrite();
   }
 );
 </script>

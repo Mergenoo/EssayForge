@@ -14,6 +14,10 @@ export interface Database {
             data: {
               text: string;
             };
+            rewrite: {
+              id: string;
+              text: string;
+            }[];
           }[];
           created_at: string;
           updated_at: string;

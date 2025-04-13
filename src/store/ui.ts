@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 export const useUIStore = defineStore("ui", {
   state: () => ({
     isOutlineOpen: false,
+    isRewriteOpen: false,
   }),
   actions: {
     toggleOutline() {
@@ -14,6 +15,15 @@ export const useUIStore = defineStore("ui", {
     },
     closeOutline() {
       this.isOutlineOpen = false;
+    },
+    toggleRewrite() {
+      this.isRewriteOpen = !this.isRewriteOpen;
+    },
+    openRewrite() {
+      this.isRewriteOpen = true;
+    },
+    closeRewrite() {
+      this.isRewriteOpen = false;
     },
   },
 });
