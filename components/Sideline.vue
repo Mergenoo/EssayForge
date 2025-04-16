@@ -11,7 +11,7 @@
       class="w-10 h-10 flex items-center justify-center rounded-sm border transition"
       :class="[
         activeTab === 'outline'
-          ? 'border-green-500 text-green-400 bg-[#1a1a1a]'
+          ? 'border-primary text-primary bg-[#1a1a1a]'
           : 'border-white/10 text-white/70 bg-[#1a1a1a] hover:bg-[#2a2a2a]',
       ]"
     >
@@ -27,7 +27,7 @@
       class="w-10 h-10 flex items-center justify-center rounded-sm border transition"
       :class="[
         activeTab === 'write'
-          ? 'border-green-500 text-green-400 bg-[#1a1a1a]'
+          ? 'border-primary text-primary bg-[#1a1a1a]'
           : 'border-white/10 text-white/70 bg-[#1a1a1a] hover:bg-[#2a2a2a]',
       ]"
     >
@@ -39,7 +39,7 @@
       class="w-10 h-10 flex items-center justify-center rounded-sm border transition"
       :class="[
         activeTab === 'reorder'
-          ? 'border-green-500 text-green-400 bg-[#1a1a1a]'
+          ? 'border-primary text-primary bg-[#1a1a1a]'
           : 'border-white/10 text-white/70 bg-[#1a1a1a] hover:bg-[#2a2a2a]',
       ]"
     >
@@ -63,6 +63,7 @@ const setActive = (tab: typeof activeTab.value) => {
   if (wasActive) {
     activeTab.value = null;
     ui.closeOutline();
+    ui.closeRewrite();
     return;
   }
 

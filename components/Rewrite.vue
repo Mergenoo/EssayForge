@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="ui.isRewriteOpen"
-    class="w-80 h-screen bg-[#121212]/80 text-white p-5 backdrop-blur-lg shadow-2xl z-30 border-r border-white/10"
+    class="w-80 h-screen bg-[#121212]/80 text-white p-5 backdrop-blur-lg shadow-2xl z-30 border-r border-white/10 overflow-y-auto"
   >
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
@@ -17,40 +17,43 @@
     </div>
 
     <div
-      v-for="(block, index) in content.filter((b) => b.type !== 'outlineTopic')"
+      v-for="(block, index) in content.filter((b) => b.type === 'paragraph')"
       :key="block.id"
-      class="space-y-2"
+      class="mb-6"
     >
       <button
         @click="toggleOpen(index)"
         class="w-full mt-2 p-3 text-left text-white font-mono text-sm whitespace-pre-wrap hover:bg-white/10"
       >
-        {{ block.data.text }}
+        Block: {{ index + 1 }}
       </button>
 
       <div
-        v-if="
-          openIndexes.includes(index) && block.rewrite && block.rewrite.length
-        "
-        class="bg-secondary border border-white/10 p-4 space-y-3"
+        v-if="openIndexes.includes(index) && block.data.sentences"
+        class="bg-secondary border border-white/10 p-4 space-y-4"
       >
         <div
-          v-for="(suggestion, i) in block.rewrite"
-          :key="suggestion.id"
-          class="flex items-center gap-3"
+          v-for="(sentence, sIndex) in block.data.sentences"
+          :key="sentence.id"
+          class="space-y-2"
         >
-          <div
-            class="w-5 h-5 rounded-full border-2 border-white/20 flex items-center justify-center overflow-hidden"
-          >
-            <div
-              v-if="i === 1"
-              class="w-3 h-3 rounded-full bg-purple-500"
-            ></div>
+          <p class="text-sm text-white/60">Sentence {{ sIndex + 1 }}</p>
+
+          <div class="flex flex-col gap-2">
+            <button
+              v-for="rewrite in sentence.rewrites"
+              :key="rewrite.id"
+              @click="handleRewriteClick(block.id, sentence.id, rewrite.id)"
+              :class="[
+                'p-2 text-sm rounded transition text-left',
+                sentence.selected === sentence.rewrites.indexOf(rewrite)
+                  ? 'bg-primary text-white'
+                  : 'bg-white/5 border border-white/10 hover:border-primary',
+              ]"
+            >
+              {{ rewrite.text }}
+            </button>
           </div>
-          <div class="text-sm">{{ suggestion.text }}</div>
-        </div>
-        <div class="pt-2">
-          <button class="text-white/60 hover:text-white text-lg">+</button>
         </div>
       </div>
     </div>
@@ -58,27 +61,26 @@
 </template>
 
 <script setup lang="ts">
-import type { Database } from "~/types/supabase";
-import { useSupabaseClient, useSupabaseUser } from "#imports";
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useUIStore } from "~/src/store/ui";
+import { useEssayStore } from "~/src/store/essay";
+import { useSupabaseClient, useSupabaseUser } from "#imports";
+import type { Database } from "~/types/supabase";
 
 const supabase = useSupabaseClient<Database>();
 const user = useSupabaseUser();
+const route = useRoute();
+
+const essayId = route.params.id as string;
+
 const ui = useUIStore();
-
-const essayId = useRoute().params.id as string;
-
-type Block = {
-  id: string;
-  type: "outlineTopic" | "paragraph";
-  data: { text: string };
-  rewrite: { id: string; text: string }[];
-};
+const essayStore = useEssayStore();
 
 const title = ref("");
-const content = ref<Block[]>([]);
+const content = ref<Database["public"]["Tables"]["essays"]["Row"]["content"]>(
+  []
+);
 const openIndexes = ref<number[]>([]);
 
 const toggleOpen = (index: number) => {
@@ -89,12 +91,25 @@ const toggleOpen = (index: number) => {
   }
 };
 
+const handleRewriteClick = async (
+  blockId: string,
+  sentenceId: string,
+  rewriteId: string
+) => {
+  await essayStore.isActiveChanger(essayId, blockId, sentenceId, rewriteId);
+
+  const updated = essayStore.essays.find((e) => e.id === essayId)?.content;
+  if (Array.isArray(updated)) {
+    content.value = updated;
+  }
+};
+
 const loadEssay = async () => {
   const { data, error } = await supabase
     .from("essays")
     .select("title, content")
     .eq("id", essayId)
-    .eq("user_id", user.value?.id)
+    .eq("user_id", user.value?.id) // changed from user_id to owner
     .single();
 
   if (data) {

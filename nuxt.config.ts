@@ -3,7 +3,12 @@ import Components from "unplugin-vue-components/vite";
 import IconsResolver from "unplugin-icons/resolver";
 
 export default defineNuxtConfig({
-  modules: ["@nuxtjs/tailwindcss", "nuxt-tiptap-editor", "@nuxtjs/supabase", "@pinia/nuxt"],
+  modules: [
+    "@nuxtjs/tailwindcss",
+    "nuxt-tiptap-editor",
+    "@nuxtjs/supabase",
+    "@pinia/nuxt",
+  ],
   tailwindcss: {
     exposeConfig: true,
     viewer: true,
@@ -42,5 +47,6 @@ export default defineNuxtConfig({
       }),
     ],
   },
+
   compatibilityDate: "2025-03-15",
 });

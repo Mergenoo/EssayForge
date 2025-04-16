@@ -3,7 +3,6 @@
     <!-- Sidebar -->
     <sideline class="w-20" />
 
-    <!-- Outline Panel (slide in/out) -->
     <div
       class="transition-all duration-300 ease-in-out bg-secondary overflow-hidden"
       :class="ui.isOutlineOpen || ui.isRewriteOpen ? 'w-80' : 'w-0'"
@@ -16,7 +15,6 @@
       </div>
     </div>
 
-    <!-- Main Editor Area -->
     <div
       class="flex-1 transition-all duration-300 ease-in-out px-6 pt-4 overflow-y-auto"
     >
@@ -42,7 +40,7 @@
           :class="[
             'outline-none w-full p-1 border-l-2',
             block.type === 'outlineTopic'
-              ? 'font-semibold text-green-400 border-green-500'
+              ? 'font-semibold text-primary border-primary'
               : 'text-white border-transparent',
           ]"
           @input="onBlockInput($event, block.id)"
@@ -136,7 +134,6 @@ const insertBlockAfter = (index: number) => {
 const handleKeydown = (event: KeyboardEvent, index: number) => {
   const target = event.target as HTMLElement;
 
-  // BACKSPACE (or DELETE) deletes block only if empty
   if (
     (event.key === "Backspace" || event.key === "Delete") &&
     target.innerText.trim() === ""
@@ -163,7 +160,6 @@ const handleKeydown = (event: KeyboardEvent, index: number) => {
     }
   }
 
-  // Move UP
   if (event.key === "ArrowUp" && index > 0) {
     event.preventDefault();
     const prevBlock = content.value[index - 1];
@@ -173,7 +169,6 @@ const handleKeydown = (event: KeyboardEvent, index: number) => {
     }
   }
 
-  // Move DOWN
   if (event.key === "ArrowDown" && index < content.value.length - 1) {
     event.preventDefault();
     const nextBlock = content.value[index + 1];
@@ -200,7 +195,7 @@ const handleTab = (event: KeyboardEvent, index: number) => {
 
     const range = document.createRange();
     range.selectNodeContents(el);
-    range.collapse(true); // true = beginning of block; false = end
+    range.collapse(true);
 
     const selection = window.getSelection();
     selection?.removeAllRanges();
@@ -268,7 +263,6 @@ onMounted(() => {
     }
   }
 
-  // If still empty, insert the first block
   if (content.value.length === 0) {
     content.value.push({
       id: uuidv4(),
@@ -278,6 +272,7 @@ onMounted(() => {
   }
 
   ui.closeOutline();
+  ui.closeRewrite();
   clearDraft();
   loadEssay();
 });

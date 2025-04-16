@@ -1,12 +1,10 @@
 // src/store/auth.ts
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useRouter } from "vue-router";
 import type { Database } from "~/types/supabase";
 
 export const useAuthStore = defineStore("auth", () => {
   const client = useSupabaseClient<Database>();
-  const router = useRouter();
 
   const email = ref("");
   const password = ref("");
@@ -19,10 +17,12 @@ export const useAuthStore = defineStore("auth", () => {
       return;
     }
 
-    const { error } = await client.auth.signInWithPassword({
+    const { data, error } = await client.auth.signInWithPassword({
       email: email.value,
       password: password.value,
     });
+
+    console.log(data, error);
 
     if (error) {
       errorMessage.value = error.message;
