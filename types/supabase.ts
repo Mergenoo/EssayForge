@@ -9,13 +9,6 @@ export interface Database {
           last_modified: string;
           is_tutorial_essay: boolean;
           title: string;
-          folder: {
-            id: string;
-            user_id: number;
-            created_at: string;
-            last_modified: string;
-            name: string;
-          };
           status: string;
           is_starred: boolean;
           spell_check: boolean;

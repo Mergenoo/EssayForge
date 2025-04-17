@@ -35,18 +35,16 @@
         <div
           contenteditable
           :data-id="block.id"
-          spellcheck="false"
           :ref="(el) => setBlockText(el, block.data.text)"
           :class="[
-            'outline-none w-full p-1 border-l-2',
+            'outline-none w-full p-1 border-l-2 transition-colors duration-200',
             block.type === 'outlineTopic'
               ? 'font-semibold text-primary border-primary'
               : 'text-white border-transparent',
+            highlight.activeBlockId === block.id
+              ? 'bg-primary bg-opacity-50 p-2'
+              : '',
           ]"
-          @input="onBlockInput($event, block.id)"
-          @keydown="handleKeydown($event, index)"
-          @keydown.enter.prevent="insertBlockAfter(index)"
-          @keydown.tab.prevent="handleTab($event, index)"
         ></div>
       </div>
     </div>
@@ -61,9 +59,10 @@ import { v4 as uuidv4 } from "uuid";
 import type { Database } from "~/types/supabase";
 import sideline from "~/components/Sideline.vue";
 import OutlinePanel from "~/components/Outline.vue";
-import Rewrite from "~/components/Rewrite.vue";
 import { useUIStore } from "~/src/store/ui";
+import { useHighlightStore } from "~/src/store/highlight";
 
+const highlight = useHighlightStore();
 const supabase = useSupabaseClient<Database>();
 const user = useSupabaseUser();
 const route = useRoute();

@@ -118,7 +118,6 @@ const fetchessays = async () => {
   if (error) throw error;
 
   if (data) essays.value = data;
-
 };
 
 const insertEssay = async () => {
@@ -143,28 +142,6 @@ const insertEssay = async () => {
   }
 
   navigateTo(`/essays/${data.id}`);
-};
-
-const fetchUser = async () => {
-  if (!user.value) return;
-
-  const { data, error } = await client
-    .from("users")
-    .select("*")
-    .eq("id", user.value.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error fetching profile:", error.message);
-    return;
-  }
-
-  if (!data) {
-    console.warn("No user profile found.");
-    return;
-  }
-
-  userProfile.value = data;
 };
 
 const createFolder = async () => {
@@ -205,7 +182,6 @@ const formatDate = (str: string) => {
 };
 
 onMounted(() => {
-  fetchUser();
   fetchessays();
   fetchFolder();
 });

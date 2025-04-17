@@ -20,12 +20,13 @@
       v-for="(block, index) in content.filter((b) => b.type === 'paragraph')"
       :key="block.id"
       class="mb-6"
+      @click="() => handleSentenceClick(block.id)"
     >
       <button
         @click="toggleOpen(index)"
         class="w-full mt-2 p-3 text-left text-white font-mono text-sm whitespace-pre-wrap hover:bg-white/10"
       >
-        Block: {{ index + 1 }}
+        {{ block.data.text }}
       </button>
 
       <div
@@ -35,7 +36,7 @@
         <div
           v-for="(sentence, sIndex) in block.data.sentences"
           :key="sentence.id"
-          class="space-y-2"
+          class="space-y-2 cursor-pointer"
         >
           <p class="text-sm text-white/60">Sentence {{ sIndex + 1 }}</p>
 
@@ -45,9 +46,9 @@
               :key="rewrite.id"
               @click="handleRewriteClick(block.id, sentence.id, rewrite.id)"
               :class="[
-                'p-2 text-sm rounded transition text-left',
+                'w-full mt-2 p-3 text-left text-white font-mono text-sm whitespace-pre-wrap break-words break-all hover:bg-white/10',
                 sentence.selected === sentence.rewrites.indexOf(rewrite)
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary  text-white'
                   : 'bg-white/5 border border-white/10 hover:border-primary',
               ]"
             >
@@ -61,22 +62,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { useUIStore } from "~/src/store/ui";
-import { useEssayStore } from "~/src/store/essay";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
 import type { Database } from "~/types/supabase";
+import { useHighlightStore } from "~/src/store/highlight";
 
+const highlight = useHighlightStore();
 const supabase = useSupabaseClient<Database>();
 const user = useSupabaseUser();
 const route = useRoute();
+const ui = useUIStore();
 
 const essayId = route.params.id as string;
-
-const ui = useUIStore();
-const essayStore = useEssayStore();
-
 const title = ref("");
 const content = ref<Database["public"]["Tables"]["essays"]["Row"]["content"]>(
   []
@@ -96,12 +95,53 @@ const handleRewriteClick = async (
   sentenceId: string,
   rewriteId: string
 ) => {
-  await essayStore.isActiveChanger(essayId, blockId, sentenceId, rewriteId);
+  const paragraphIndex = content.value.findIndex((b) => b.id === blockId);
+  if (paragraphIndex === -1) return;
 
-  const updated = essayStore.essays.find((e) => e.id === essayId)?.content;
-  if (Array.isArray(updated)) {
-    content.value = updated;
+  const paragraph = content.value[paragraphIndex];
+  if (!paragraph.data?.sentences) return;
+
+  const sentenceIndex = paragraph.data.sentences.findIndex(
+    (s) => s.id === sentenceId
+  );
+  if (sentenceIndex === -1) return;
+
+  const sentence = paragraph.data.sentences[sentenceIndex];
+  const newIndex = sentence.rewrites.findIndex((r) => r.id === rewriteId);
+  if (newIndex === -1) return;
+
+  sentence.selected = newIndex;
+  paragraph.data.text = sentence.rewrites[newIndex]?.text ?? "";
+
+  nextTick(() => {
+    const el = document.querySelector(`[data-id='${blockId}']`);
+    if (el instanceof HTMLElement) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus();
+    }
+  });
+
+  const { error } = await supabase
+    .from("essays")
+    .update({ content: content.value })
+    .eq("id", essayId)
+    .eq("user_id", user.value?.id);
+
+  if (error) {
+    console.error("❌ Failed to update content in Supabase:", error.message);
   }
+};
+
+const handleSentenceClick = (blockId: string) => {
+  highlight.setActiveBlock(blockId);
+
+  nextTick(() => {
+    const el = document.querySelector(`[data-id='${blockId}']`);
+    if (el instanceof HTMLElement) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus();
+    }
+  });
 };
 
 const loadEssay = async () => {
@@ -109,7 +149,7 @@ const loadEssay = async () => {
     .from("essays")
     .select("title, content")
     .eq("id", essayId)
-    .eq("user_id", user.value?.id) // changed from user_id to owner
+    .eq("user_id", user.value?.id)
     .single();
 
   if (data) {

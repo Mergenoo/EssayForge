@@ -161,27 +161,6 @@ const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value;
 };
 
-const fetchUser = async () => {
-  if (!user.value) return;
-
-  const { data, error } = await client
-    .from("users")
-    .select("*")
-    .eq("id", user.value.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error("❌ Error fetching profile:", error.message);
-    return;
-  }
-
-  if (!data) {
-    console.warn("⚠️ No user profile found.");
-    return;
-  }
-
-  userProfile.value = data;
-};
 const handleClickOutside = (e: MouseEvent) => {
   if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
     showDropdown.value = false;
@@ -190,7 +169,6 @@ const handleClickOutside = (e: MouseEvent) => {
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
-  fetchUser();
 });
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);

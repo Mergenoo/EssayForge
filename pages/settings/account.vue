@@ -20,29 +20,6 @@ const userProfile = ref<UserProfile | null>(null);
 const client = useSupabaseClient();
 const user = useSupabaseUser();
 
-
-const fetchUser = async () => {
-  if (!user.value) return;
-
-  const { data, error } = await client
-    .from("users")
-    .select("*")
-    .eq("id", user.value.id)
-    .maybeSingle(); // safer than `.single()`
-
-  if (error) {
-    console.error("❌ Error fetching profile:", error.message);
-    return;
-  }
-
-  if (!data) {
-    console.warn("⚠️ No user profile found.");
-    return;
-  }
-
-  userProfile.value = data;
-};
-
 const deleteAuthUser = async () => {
   const id = user.value?.id;
 
@@ -67,7 +44,6 @@ const deleteAuthUser = async () => {
 const deleteUser = async () => {
   if (!user.value) return;
 
-  const { error } = await client.from("users").delete().eq("id", user.value.id);
   const { error: essayerror } = await client
     .from("essays")
     .delete()
@@ -77,17 +53,11 @@ const deleteUser = async () => {
     console.error("failed to delete essays", essayerror.message);
     return;
   }
-  if (error) {
-    console.error("❌ Error deleting from users table:", error.message);
-    return;
-  }
 
   await deleteAuthUser();
 };
 
-onMounted(() => {
-  fetchUser();
-});
+onMounted(() => {});
 
 // @ts-ignore
 definePageMeta({ middleware: "auth" });
